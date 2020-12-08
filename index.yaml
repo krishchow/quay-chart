@@ -1,0 +1,13 @@
+apiVersion: v1
+entries:
+  quay-cp:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2020-12-07T22:04:07.927327343-05:00"
+    description: A Helm chart for Kubernetes
+    digest: 4f9936ca3553f148ce1010eacd140df51f8d23bb0dd5d70d4c8bb58e5fca1b54
+    name: quay-cp
+    urls:
+    - https://github.com/krishchow/quay-chart/releases/download/quay-cp-0.1.0/quay-cp-0.1.0.tgz
+    version: 0.1.0
+generated: "2020-12-07T22:04:07.699603262-05:00"
