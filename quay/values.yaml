@@ -1,17 +1,9 @@
 bucketName: 'quay.demo.octo.redhat.com'
-userName: 'quaydemouser'
 namespace: default
+region: 'us-east-2'
 
 s3Secret: 'bucket-conn'
 redisSecret: 'redis-conn'
 postgresSecret: 'db-conn'
 pullSecret: 'redhat-quay-pull-secret'
 
-storageGB: 10
-
-region: 'us-east-2'
-vpcId: 'vpc-0837bd0bcf10c04cb'
-igwId: 'igw-057e77864fe7a5fd8'
-aZCIDRa: '10.0.99.0/24'
-aZCIDRb: '10.0.100.0/24'
-aZCIDRc: '10.0.101.0/24'
