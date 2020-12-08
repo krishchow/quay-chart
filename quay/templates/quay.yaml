@@ -6,7 +6,7 @@ metadata:
   annotations:
     "helm.sh/hook": pre-install
     "helm.sh/hook-weight": "0"
-    "helm.sh/hook-delete-policy": before-hook-creation
+    "helm.sh/hook-delete-policy": hook-succeeded
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -15,7 +15,7 @@ metadata:
   annotations:
     "helm.sh/hook": pre-install
     "helm.sh/hook-weight": "1"
-    "helm.sh/hook-delete-policy": before-hook-creation
+    "helm.sh/hook-delete-policy": hook-succeeded
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
@@ -31,7 +31,7 @@ metadata:
   annotations:
     "helm.sh/hook": pre-install
     "helm.sh/hook-weight": "2"
-    "helm.sh/hook-delete-policy": before-hook-creation
+    "helm.sh/hook-delete-policy": hook-succeeded
 subjects:
   - kind: ServiceAccount
     name: internal-kubectl
@@ -49,7 +49,7 @@ metadata:
   annotations:
     "helm.sh/hook": pre-install
     "helm.sh/hook-weight": "3"
-    "helm.sh/hook-delete-policy": before-hook-creation
+    "helm.sh/hook-delete-policy": hook-succeeded
 spec:
   backoffLimit: 10
   template:
@@ -61,7 +61,7 @@ spec:
         command:
         - "bin/bash"
         - "-c"
-        - "oc get secret $s3secret -n $namespace>/dev/null 2>&1;while [ $? -eq 1 ]||[ $(oc get secret $s3secret -n $namespace|tail -n 1|awk '{print $3}')-ne 3 ];do echo 'Waiting for S3 Bucket';sleep 5;oc get secret $s3secret -n $namespace>/dev/null 2>&1;done;echo 'S3 done';oc get secret $redissecret -n $namespace>/dev/null 2>&1;while [ $(oc get secret $redissecret -n $namespace|tail -n 1|awk '{print $3}')-ne 2 ];do echo 'Waiting for Redis';sleep 5;oc get secret $redissecret -n $namespace>/dev/null 2>&1;done;echo 'Redis done';oc get secret $pgsecret -n $namespace>/dev/null 2>&1;while [ $(oc get secret $pgsecret -n $namespace|tail -n 1|awk '{print $3}')-ne 6 ];do echo 'Waiting for Postgres';sleep 5;oc get secret $pgsecret -n $namespace>/dev/null 2>&1;done;echo 'Postgres done'"
+        - "kubectl get secret $s3secret -n $namespace>/dev/null 2>&1;while [[ $? -eq 1 ]]||[[ $(kubectl get secret $s3secret -n $namespace|tail -n 1|awk '{print $3}')-ne 3 ]];do echo 'Waiting for S3 Bucket';sleep 5;kubectl get secret $s3secret -n $namespace>/dev/null 2>&1;done;echo 'S3 done';kubectl get secret $redissecret -n $namespace>/dev/null 2>&1;while [[ $? -eq 1 ]]||[[ $(kubectl get secret $redissecret -n $namespace|tail -n 1|awk '{print $3}')-ne 2 ]];do echo 'Waiting for Redis';sleep 5;kubectl get secret $redissecret -n $namespace>/dev/null 2>&1;done;echo 'Redis done';kubectl get secret $pgsecret -n $namespace>/dev/null 2>&1;while [[ $? -eq 1 ]]||[[ $(kubectl get secret $pgsecret -n $namespace|tail -n 1|awk '{print $3}')-ne 6 ]];do echo 'Waiting for Postgres';sleep 5;kubectl get secret $pgsecret -n $namespace>/dev/null 2>&1;done;echo 'Postgres done'"
         env:
         - name: pgsecret
           value: {{ .Values.postgresSecret | quote }}
