@@ -55,9 +55,10 @@ spec:
   template:
     spec:
       restartPolicy: Never
+      serviceAccountName: internal-kubectl
       containers:
-      - name: prep-db
-        image: postgres:9.6
+      - name: tester
+        image: bitnami/kubectl:1.17.3
         command:
         - "bin/bash"
         - "-c"
