@@ -1,3 +1,77 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: internal-kubectl  
+  namespace: {{ .Values.namespace | default "default" | quote }}
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: modify-secrets
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: modify-secrets-to-sa
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "2"
+    "helm.sh/hook-delete-policy": before-hook-creation
+subjects:
+  - kind: ServiceAccount
+    name: internal-kubectl
+    namespace: {{ .Values.namespace | default "default" | quote }}
+roleRef:
+  kind: ClusterRole
+  name: modify-secrets
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: wait-for-secrets
+  namespace: {{ .Values.namespace | default "default" | quote }}
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "3"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 10
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: prep-db
+        image: postgres:9.6
+        command:
+        - "bin/bash"
+        - "-c"
+        - "seconds=0;while [ $(oc get secret $s3secret -n $namespace|tail -n 1|awk '{print $3}')-ne 3 ];do echo 'Waiting for S3 Bucket - $seconds seconds have passed';sleep 5;seconds=`expr $seconds + 5`;done;while [ $(oc get secret $redissecret -n $namespace|tail -n 1|awk '{print $3}')-ne 2 ];do echo 'Waiting for S3 Bucket - $seconds seconds have passed';sleep 5;seconds=`expr $seconds + 5`;done;while [ $(oc get secret $pgsecret -n $namespace|tail -n 1|awk '{print $3}')-ne 6 ];do echo 'Waiting for S3 Bucket - $seconds seconds have passed';sleep 5;seconds=`expr $seconds + 5`;done"
+        env:
+        - name: pgsecret
+          value: {{ .Values.postgresSecret | quote }}
+        - name: redissecret
+          value: {{ .Values.redisSecret | quote }}
+        - name: s3secret
+          value: {{ .Values.s3Secret | quote }}
+        - name: namespace
+          value: {{ .Values.namespace | default "default" | quote }}
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
